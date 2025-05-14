@@ -89,7 +89,7 @@ def extract_info_from_file(file_path):
             "vatNumber": {"type": schema_type_string, "description": "The VAT identification number of the company."},
             "priceWithoutVAT": {"type": schema_type_number, "format": "float", "description": "The total price of goods/services before VAT is applied. Use 0.0 if not explicitly found."},
             "vat": {"type": schema_type_number, "format": "float", "description": "The total VAT amount charged. Use 0.0 if not explicitly found."},
-            "vatRate": {"type": schema_type_number, "format": "float", "description": "The VAT rate as a percentage (e.g., 20 for 20%). Use 0.0 if not explicitly found."},
+            "vatRate": {"type": schema_type_number, "format": "float", "description": "The VAT rate as a percentage (e.g., 21 for 21%). Use 0.0 if not explicitly found."},
             "priceIncludingVAT": {"type": schema_type_number, "format": "float", "description": "The final price including VAT. This is usually the most prominent total amount."},
         }
     }
