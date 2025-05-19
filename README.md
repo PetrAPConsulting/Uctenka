@@ -1,6 +1,6 @@
 # Receipt Information Extractor (uctenka.py)
 
-This Python script uses the Google Gemini API to extract structured information (company name, VAT number, prices, etc.) from PDF or image files representing receipts or when modified even invoices. It processes files prefixed with "uctenka_" and outputs the extracted data as a JSON file for each input.
+This Python script uses the Google Gemini API to extract structured information (company name, VAT number, prices, etc.) from PDF or image files representing receipts or when modified even invoices. It processes files prefixed with "uctenka_" and outputs the extracted data as a JSON file for each input. You can download HTML based web application **Expense tracker** that allows you track expenses using JSONs extracted from receipts with python script. 
 
 ## Features
 
