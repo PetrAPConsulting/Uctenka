@@ -6,7 +6,7 @@ import json
 import google.generativeai as genai
 
 # --- Configuration ---
-GEMINI_API_KEY = "YOUR ACTUAL API KEY" 
+GEMINI_API_KEY = "YOUR_API_KEY_HERE" 
 MODEL_NAME = "gemini-2.0-flash-001"
 
 # --- Helper to get MIME type ---
