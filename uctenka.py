@@ -1,15 +1,13 @@
 import os
 import glob
 import mimetypes
-import json 
+import json
 
-# Correct base import
 import google.generativeai as genai
 
-
 # --- Configuration ---
-GEMINI_API_KEY = "YOUR_API_KEY_HERE" 
-MODEL_NAME = "gemini-2.0-flash-001" # you could use 1.5 Flash as well
+GEMINI_API_KEY = "YOUR ACTUAL API KEY" 
+MODEL_NAME = "gemini-2.0-flash-001"
 
 # --- Helper to get MIME type ---
 def get_mime_type(file_path):
@@ -64,6 +62,7 @@ def extract_info_from_file(file_path):
     If a piece of information is not found, you may omit the field or use a suitable placeholder like 'N/A' if the schema requires it,
     but prioritize extracting actual values. For numerical values (prices, VAT amount, VAT rate), provide them as numbers (float).
     For VAT rate, if it's written as e.g. '21%', provide the number 21.
+    Also, extract the date of sale (transaction date) from the receipt. It might be in dd/mm/yyyy or dd.mm.yyyy format. If multiple dates are present (e.g., issue date, due date), use the primary transaction/sale date.
     """
 
     contents = [
@@ -72,10 +71,12 @@ def extract_info_from_file(file_path):
     ]
 
     try:
+        # Attempt to use genai.Type directly for schema definition
         schema_type_object = genai.Type.OBJECT
         schema_type_string = genai.Type.STRING
         schema_type_number = genai.Type.NUMBER
     except AttributeError:
+        # Fallback if genai.Type is not directly accessible
         print("Warning: genai.Type not directly accessible, using string representations for schema types.")
         schema_type_object = "OBJECT"
         schema_type_string = "STRING"
@@ -83,14 +84,15 @@ def extract_info_from_file(file_path):
 
     response_schema_dict = {
         "type": schema_type_object,
-        "required": ["companyName", "vatNumber", "priceWithoutVAT", "vat", "vatRate", "priceIncludingVAT"],
+        "required": ["companyName", "vatNumber", "priceWithoutVAT", "vat", "vatRate", "priceIncludingVAT", "dateOfSale"], 
         "properties": {
-            "companyName": {"type": schema_type_string, "description": "The legal name of the company that issued the receipt always associated with the VAT identification number"},
+            "companyName": {"type": schema_type_string, "description": "The legal name of the company that issued the receipt always associated with the VAT identification number. Legal name always includes legal form (e.g. s.r.o., a.s. etc.)"},
             "vatNumber": {"type": schema_type_string, "description": "The VAT identification number of the company."},
             "priceWithoutVAT": {"type": schema_type_number, "format": "float", "description": "The total price of goods/services before VAT is applied. Use 0.0 if not explicitly found."},
             "vat": {"type": schema_type_number, "format": "float", "description": "The total VAT amount charged. Use 0.0 if not explicitly found."},
             "vatRate": {"type": schema_type_number, "format": "float", "description": "The VAT rate as a percentage (e.g., 21 for 21%). Use 0.0 if not explicitly found."},
             "priceIncludingVAT": {"type": schema_type_number, "format": "float", "description": "The final price including VAT. This is usually the most prominent total amount."},
+            "dateOfSale": {"type": schema_type_string, "description": "The date of sale or transaction date from the receipt, in dd.mm.yyyy format."} 
         }
     }
 
@@ -148,9 +150,8 @@ if __name__ == "__main__":
                 json_output = extract_info_from_file(file_path)
                 if json_output:
                     print(f"Extracted JSON for {os.path.basename(file_path)}:")
-                    print(json_output) # Keep printing to terminal
+                    print(json_output)
 
-                    # --- SAVE TO JSON FILE ---
                     base_name = os.path.basename(file_path)
                     file_name_without_ext = os.path.splitext(base_name)[0]
                     output_json_filename = file_name_without_ext + ".json"
@@ -171,6 +172,5 @@ if __name__ == "__main__":
                              print(f"Error saving raw output to file {output_raw_filename}: {e_raw}")
                     except Exception as e:
                         print(f"Error saving JSON to file {output_json_filename}: {e}")
-                    # --- End SAVE TO JSON FILE ---
 
             print("\n--- Processing complete. ---")
