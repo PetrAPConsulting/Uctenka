@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Správa účtenek</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .receipt-card {
+            transition: all 0.3s ease;
+        }
+        .receipt-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-10">
+            <h1 class="text-3xl font-bold text-center text-gray-800">Aplikace pro správu účtenek</h1>
+        </header>
+
+        <!-- Navigace -->
+        <div class="mb-8">
+            <div class="flex flex-wrap border-b border-gray-200">
+                <button class="tab-button px-6 py-3 bg-white text-blue-600 font-medium rounded-t-lg border-l border-t border-r border-gray-200 active" data-tab="import">Import účtenek</button>
+                <button class="tab-button px-6 py-3 bg-gray-100 text-gray-600 font-medium rounded-t-lg border-l border-t border-r border-gray-200" data-tab="receipts">Seznam účtenek</button>
+                <button class="tab-button px-6 py-3 bg-gray-100 text-gray-600 font-medium rounded-t-lg border-l border-t border-r border-gray-200" data-tab="reports">Reporty</button>
+                <button class="tab-button px-6 py-3 bg-gray-100 text-gray-600 font-medium rounded-t-lg border-l border-t border-r border-gray-200" data-tab="backup">Záloha dat</button>
+            </div>
+        </div>
+
+        <!-- Obsah záložek -->
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <!-- Import účtenek -->
+            <div id="import" class="tab-content active">
+                <h2 class="text-xl font-semibold mb-4">Import účtenky</h2>
+                <div class="mb-6">
+                    <input type="file" id="fileInput" accept=".json" class="hidden">
+                    <label for="fileInput" class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded inline-block">
+                        Vybrat JSON soubor
+                    </label>
+                    <span id="fileName" class="ml-4 text-gray-600"></span>
+                </div>
+
+                <div id="importPreview" class="mb-6 hidden">
+                    <h3 class="text-lg font-medium mb-2">Náhled účtenky</h3>
+                    <div class="bg-gray-50 p-4 rounded border">
+                        <div id="receiptPreview" class="grid grid-cols-2 gap-4">
+                            <!-- Sem se doplní náhled účtenky -->
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <label for="categorySelect" class="block text-sm font-medium text-gray-700 mb-1">Kategorie výdaje:</label>
+                        <select id="categorySelect" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                            <option value="">-- Vyberte kategorii --</option>
+                            <option value="pohonné hmoty">Pohonné hmoty</option>
+                            <option value="mytí vozu">Mytí vozu</option>
+                            <option value="auto ostatní">Auto ostatní</option>
+                            <option value="kancelářské potřeby">Kancelářské potřeby</option>
+                            <option value="kancelářské služby">Kancelářské služby</option>
+                            <option value="taxi">Taxi</option>
+                            <option value="hospitality">Hospitality</option>
+                            <option value="ostatní">Ostatní</option>
+                        </select>
+                    </div>
+
+                    <button id="saveReceiptBtn" class="mt-4 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Uložit účtenku
+                    </button>
+                </div>
+
+                <div id="importSuccess" class="hidden mt-4 p-4 bg-green-100 text-green-700 rounded">
+                    Účtenka byla úspěšně uložena!
+                </div>
+            </div>
+
+            <!-- Seznam účtenek -->
+            <div id="receipts" class="tab-content">
+                <h2 class="text-xl font-semibold mb-4">Seznam účtenek</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Číslo dokladu</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dodavatel</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Částka bez DPH</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategorie</th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody id="receiptsList" class="bg-white divide-y divide-gray-200">
+                            <!-- Sem se doplní seznam účtenek -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noReceipts" class="text-center py-8 text-gray-500">
+                    Žádné účtenky k zobrazení. Importujte účtenky v záložce "Import účtenek".
+                </div>
+            </div>
+
+            <!-- Reporty -->
+            <div id="reports" class="tab-content">
+                <h2 class="text-xl font-semibold mb-4">Reporty</h2>
+                
+                <div class="mb-6">
+                    <label for="reportType" class="block text-sm font-medium text-gray-700 mb-1">Typ reportu:</label>
+                    <select id="reportType" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <option value="quarterly-category">Kategorie výdajů za čtvrtletí</option>
+                        <option value="ytd-category">Kategorie výdajů - Year to Date</option>
+                        <option value="ytd-supplier">Dodavatelé - Year to Date</option>
+                    </select>
+                </div>
+
+                <div id="quarterSelector" class="mb-6">
+                    <label for="quarterSelect" class="block text-sm font-medium text-gray-700 mb-1">Čtvrtletí:</label>
+                    <select id="quarterSelect" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <option value="1">Q1 (Leden - Březen)</option>
+                        <option value="2">Q2 (Duben - Červen)</option>
+                        <option value="3">Q3 (Červenec - Září)</option>
+                        <option value="4">Q4 (Říjen - Prosinec)</option>
+                    </select>
+                </div>
+
+                <div id="yearSelector" class="mb-6">
+                    <label for="yearSelect" class="block text-sm font-medium text-gray-700 mb-1">Rok:</label>
+                    <select id="yearSelect" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                        <!-- Roky se doplní dynamicky -->
+                    </select>
+                </div>
+
+                <button id="generateReportBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded">
+                    Vygenerovat report
+                </button>
+
+                <div id="reportResult" class="mt-8 hidden">
+                    <h3 id="reportTitle" class="text-lg font-medium mb-4"></h3>
+                    
+                    <div class="flex flex-wrap -mx-2">
+                        <div class="w-full lg:w-1/2 px-2 mb-4">
+                            <div class="bg-gray-50 p-4 rounded border">
+                                <h4 class="font-medium mb-2">Tabulka</h4>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead>
+                                            <tr id="reportTableHeader">
+                                                <!-- Sem se doplní záhlaví tabulky -->
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reportTableBody" class="bg-white divide-y divide-gray-200">
+                                            <!-- Sem se doplní obsah tabulky -->
+                                        </tbody>
+                                        <tfoot id="reportTableFooter">
+                                            <!-- Sem se doplní zápatí tabulky -->
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full lg:w-1/2 px-2 mb-4">
+                            <div class="bg-gray-50 p-4 rounded border">
+                                <h4 class="font-medium mb-2">Graf</h4>
+                                <div class="chart-container" style="position: relative; height:300px;">
+                                    <canvas id="reportChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Záloha dat -->
+            <div id="backup" class="tab-content">
+                <h2 class="text-xl font-semibold mb-4">Záloha a obnovení dat</h2>
+                
+                <div class="bg-blue-50 p-4 rounded-lg mb-6">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-blue-700">
+                                Zde můžete zálohovat všechna data o účtenkách do souboru a později je obnovit. Tuto funkci využijte před čištěním prohlížeče nebo pro přenos dat mezi prohlížeči.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-8">
+                    <h3 class="text-lg font-medium mb-3">Export dat</h3>
+                    <p class="text-gray-600 mb-4">Stáhněte si všechna data o vašich účtenkách včetně kategorií do souboru JSON.</p>
+                    <button id="exportDataBtn" class="bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded">
+                        Exportovat data
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium mb-3">Import dat</h3>
+                    <p class="text-gray-600 mb-4">Nahrajte soubor se zálohovanými daty. Tato akce přepíše všechna aktuální data!</p>
+                    
+                    <div class="mb-4">
+                        <input type="file" id="backupFileInput" accept=".json" class="hidden">
+                        <label for="backupFileInput" class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded inline-block">
+                            Vybrat záložní soubor
+                        </label>
+                        <span id="backupFileName" class="ml-4 text-gray-600"></span>
+                    </div>
+                    
+                    <button id="importDataBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Importovat data
+                    </button>
+                </div>
+                
+                <div id="importSuccess" class="hidden mt-4 p-4 bg-green-100 text-green-700 rounded">
+                    Data byla úspěšně importována!
+                </div>
+                
+                <div class="mt-8 p-4 border border-red-200 rounded-lg bg-red-50">
+                    <h3 class="text-lg font-medium text-red-800 mb-2">Smazání všech dat</h3>
+                    <p class="text-red-700 mb-4">Tato akce nenávratně odstraní všechna data o účtenkách z prohlížeče. Ujistěte se, že máte data exportována před provedením této akce.</p>
+                    <button id="deleteAllDataBtn" class="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded">
+                        Smazat všechna data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <footer class="mt-10 text-center text-gray-500 text-sm">
+            &copy; 2025 Aplikace pro správu účtenek
+        </footer>
+    </div>
+
+    <script>
+        // Hlavní objekt pro správu aplikace
+        const App = {
+            // Inicializace aplikace
+            init: function() {
+                this.setupTabs();
+                this.setupFileInput();
+                this.setupReportControls();
+                this.loadReceiptsFromStorage();
+                this.updateReceiptsList();
+                this.populateYearSelect();
+                
+                // Inicializace grafu
+                this.chart = null;
+            },
+
+            // Nastavení přepínání záložek
+            setupTabs: function() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabContents = document.querySelectorAll('.tab-content');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', function() {
+                        const tabId = this.getAttribute('data-tab');
+                        
+                        tabButtons.forEach(btn => btn.classList.remove('active', 'bg-white', 'text-blue-600'));
+                        tabButtons.forEach(btn => btn.classList.add('bg-gray-100', 'text-gray-600'));
+                        this.classList.remove('bg-gray-100', 'text-gray-600');
+                        this.classList.add('active', 'bg-white', 'text-blue-600');
+                        
+                        tabContents.forEach(content => content.classList.remove('active'));
+                        document.getElementById(tabId).classList.add('active');
+                    });
+                });
+            },
+
+            // Nastavení vstupního pole pro soubor
+            setupFileInput: function() {
+                const fileInput = document.getElementById('fileInput');
+                const fileName = document.getElementById('fileName');
+                const importPreview = document.getElementById('importPreview');
+                const receiptPreview = document.getElementById('receiptPreview');
+                const categorySelect = document.getElementById('categorySelect');
+                const saveReceiptBtn = document.getElementById('saveReceiptBtn');
+                const importSuccess = document.getElementById('importSuccess');
+
+                fileInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    fileName.textContent = file.name;
+                    
+                    // Kontrola, zda jde o JSON soubor
+                    if (!file.name.endsWith('.json')) {
+                        alert('Prosím, vyberte soubor ve formátu JSON');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const receiptData = JSON.parse(e.target.result);
+                            App.currentReceiptData = receiptData;
+                            App.currentReceiptFileName = file.name;
+                            
+                            // Zobrazení náhledu
+                            let html = '';
+                            for (const [key, value] of Object.entries(receiptData)) {
+                                html += `
+                                    <div class="text-sm text-gray-600">${key}:</div>
+                                    <div class="text-sm font-medium">${value}</div>
+                                `;
+                            }
+                            receiptPreview.innerHTML = html;
+                            
+                            // Zobrazení formuláře pro výběr kategorie
+                            importPreview.classList.remove('hidden');
+                            categorySelect.value = '';
+                            saveReceiptBtn.disabled = true;
+                            importSuccess.classList.add('hidden');
+
+                        } catch (error) {
+                            alert('Neplatný formát JSON: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+
+                // Aktivace/deaktivace tlačítka uložit podle výběru kategorie
+                categorySelect.addEventListener('change', function() {
+                    saveReceiptBtn.disabled = !this.value;
+                });
+
+                // Uložení účtenky
+                saveReceiptBtn.addEventListener('click', function() {
+                    const category = categorySelect.value;
+                    
+                    // Extrakce čísla dokladu z názvu souboru
+                    const receiptNumberMatch = App.currentReceiptFileName.match(/uctenka_(\d+)\.json$/);
+                    let receiptNumber = '';
+                    
+                    if (receiptNumberMatch && receiptNumberMatch[1]) {
+                        // Doplnění nulami na 10 číslic
+                        receiptNumber = receiptNumberMatch[1].padStart(10, '0');
+                    } else {
+                        alert('Neplatný formát názvu souboru. Očekáván formát: uctenka_XXXXXXXXXX.json');
+                        return;
+                    }
+                    
+                    // Vytvoření záznamu účtenky
+                    const receipt = {
+                        ...App.currentReceiptData,
+                        receiptNumber: receiptNumber,
+                        category: category,
+                        filename: App.currentReceiptFileName
+                    };
+                    
+                    // Uložení do localStorage
+                    App.saveReceipt(receipt);
+                    
+                    // Resetování formuláře
+                    fileInput.value = '';
+                    fileName.textContent = '';
+                    importPreview.classList.add('hidden');
+                    
+                    // Zobrazení úspěšného uložení
+                    importSuccess.classList.remove('hidden');
+                    setTimeout(() => {
+                        importSuccess.classList.add('hidden');
+                    }, 3000);
+                });
+            },
+
+            // Nastavení ovládacích prvků pro reporty
+            setupReportControls: function() {
+                const reportType = document.getElementById('reportType');
+                const quarterSelector = document.getElementById('quarterSelector');
+                const generateReportBtn = document.getElementById('generateReportBtn');
+                
+                // Zobrazení/skrytí selektoru čtvrtletí podle typu reportu
+                reportType.addEventListener('change', function() {
+                    if (this.value === 'quarterly-category') {
+                        quarterSelector.classList.remove('hidden');
+                    } else {
+                        quarterSelector.classList.add('hidden');
+                    }
+                });
+                
+                // Generování reportu
+                generateReportBtn.addEventListener('click', function() {
+                    const type = reportType.value;
+                    const quarter = document.getElementById('quarterSelect').value;
+                    const year = document.getElementById('yearSelect').value;
+                    
+                    App.generateReport(type, quarter, year);
+                });
+                
+                // Nastavení ovládacích prvků pro zálohu dat
+                this.setupBackupControls();
+            },
+            
+            // Nastavení ovládacích prvků pro zálohu dat
+            setupBackupControls: function() {
+                const exportDataBtn = document.getElementById('exportDataBtn');
+                const backupFileInput = document.getElementById('backupFileInput');
+                const backupFileName = document.getElementById('backupFileName');
+                const importDataBtn = document.getElementById('importDataBtn');
+                const deleteAllDataBtn = document.getElementById('deleteAllDataBtn');
+                
+                // Export dat
+                exportDataBtn.addEventListener('click', function() {
+                    App.exportData();
+                });
+                
+                // Výběr souboru pro import
+                backupFileInput.addEventListener('change', function(event) {
+                    const file = event.target.files[0];
+                    if (!file) {
+                        backupFileName.textContent = '';
+                        importDataBtn.disabled = true;
+                        return;
+                    }
+                    
+                    backupFileName.textContent = file.name;
+                    importDataBtn.disabled = false;
+                });
+                
+                // Import dat
+                importDataBtn.addEventListener('click', function() {
+                    const file = backupFileInput.files[0];
+                    if (!file) return;
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            App.importData(data);
+                            
+                            // Zobrazení zprávy o úspěchu
+                            const importSuccess = document.getElementById('importSuccess');
+                            importSuccess.classList.remove('hidden');
+                            setTimeout(() => {
+                                importSuccess.classList.add('hidden');
+                            }, 3000);
+                            
+                            // Reset formuláře
+                            backupFileInput.value = '';
+                            backupFileName.textContent = '';
+                            importDataBtn.disabled = true;
+                            
+                        } catch (error) {
+                            alert('Chyba při importu dat: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                });
+                
+                // Smazání všech dat
+                deleteAllDataBtn.addEventListener('click', function() {
+                    if (confirm('VAROVÁNÍ: Tato akce nenávratně smaže všechna data o účtenkách. Pokračovat?')) {
+                        if (confirm('Opravdu chcete smazat všechna data? Tuto akci nelze vrátit.')) {
+                            App.deleteAllData();
+                            alert('Všechna data byla úspěšně smazána.');
+                        }
+                    }
+                });
+            },
+            
+            // Export dat do souboru
+            exportData: function() {
+                const receipts = this.getReceiptsFromStorage();
+                
+                if (receipts.length === 0) {
+                    alert('Nejsou k dispozici žádná data pro export.');
+                    return;
+                }
+                
+                // Vytvoření JSON dat
+                const data = JSON.stringify(receipts, null, 2);
+                
+                // Vytvoření blob objektu
+                const blob = new Blob([data], { type: 'application/json' });
+                
+                // Vytvoření URL pro stažení
+                const url = URL.createObjectURL(blob);
+                
+                // Vytvoření odkazu pro stažení
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'uctenky_export_' + new Date().toISOString().slice(0, 10) + '.json';
+                
+                // Přidání odkazu do stránky a kliknutí na něj
+                document.body.appendChild(a);
+                a.click();
+                
+                // Odstranění odkazu
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 0);
+            },
+            
+            // Import dat ze souboru
+            importData: function(data) {
+                if (!Array.isArray(data)) {
+                    alert('Neplatný formát dat.');
+                    return;
+                }
+                
+                // Uložení dat do localStorage
+                localStorage.setItem('receipts', JSON.stringify(data));
+                
+                // Aktualizace seznamu účtenek
+                this.loadReceiptsFromStorage();
+                this.updateReceiptsList();
+                this.populateYearSelect();
+            },
+            
+            // Smazání všech dat
+            deleteAllData: function() {
+                // Smazání dat z localStorage
+                localStorage.removeItem('receipts');
+                
+                // Aktualizace seznamu účtenek
+                this.loadReceiptsFromStorage();
+                this.updateReceiptsList();
+                this.populateYearSelect();
+            },
+
+            // Uložení účtenky do localStorage
+            saveReceipt: function(receipt) {
+                let receipts = this.getReceiptsFromStorage();
+                
+                // Kontrola, zda účtenka s tímto číslem již existuje
+                const existingIndex = receipts.findIndex(r => r.receiptNumber === receipt.receiptNumber);
+                
+                if (existingIndex > -1) {
+                    // Aktualizace existující účtenky
+                    receipts[existingIndex] = receipt;
+                } else {
+                    // Přidání nové účtenky
+                    receipts.push(receipt);
+                }
+                
+                localStorage.setItem('receipts', JSON.stringify(receipts));
+                this.updateReceiptsList();
+            },
+
+            // Načtení účtenek z localStorage
+            getReceiptsFromStorage: function() {
+                const receipts = localStorage.getItem('receipts');
+                return receipts ? JSON.parse(receipts) : [];
+            },
+
+            // Načtení účtenek při inicializaci
+            loadReceiptsFromStorage: function() {
+                this.receipts = this.getReceiptsFromStorage();
+            },
+
+            // Aktualizace seznamu účtenek
+            updateReceiptsList: function() {
+                const receiptsContainer = document.getElementById('receiptsList');
+                const noReceipts = document.getElementById('noReceipts');
+                
+                this.receipts = this.getReceiptsFromStorage();
+                
+                if (this.receipts.length === 0) {
+                    receiptsContainer.innerHTML = '';
+                    noReceipts.classList.remove('hidden');
+                    return;
+                }
+                
+                noReceipts.classList.add('hidden');
+                
+                // Seřazení účtenek podle data (nejnovější první)
+                this.receipts.sort((a, b) => {
+                    const dateA = this.parseDate(a.dateOfSale);
+                    const dateB = this.parseDate(b.dateOfSale);
+                    return dateB - dateA;
+                });
+                
+                let html = '';
+                
+                this.receipts.forEach((receipt, index) => {
+                    const price = receipt.priceWithoutVAT > 0 ? receipt.priceWithoutVAT : receipt.priceIncludingVAT;
+                    
+                    html += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${receipt.receiptNumber}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.companyName} (${receipt.vatNumber})</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${this.formatDate(receipt.dateOfSale)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${price.toFixed(2)} Kč</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    ${receipt.category}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <button data-index="${index}" class="text-red-600 hover:text-red-900 delete-receipt">Smazat</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                receiptsContainer.innerHTML = html;
+                
+                // Přidání událostí pro tlačítka smazat
+                document.querySelectorAll('.delete-receipt').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        App.deleteReceipt(index);
+                    });
+                });
+            },
+
+            // Smazání účtenky
+            deleteReceipt: function(index) {
+                if (confirm('Opravdu chcete smazat tuto účtenku?')) {
+                    this.receipts.splice(index, 1);
+                    localStorage.setItem('receipts', JSON.stringify(this.receipts));
+                    this.updateReceiptsList();
+                }
+            },
+
+            // Generování reportu
+            generateReport: function(type, quarter, year) {
+                const reportResult = document.getElementById('reportResult');
+                const reportTitle = document.getElementById('reportTitle');
+                
+                // Získání všech účtenek
+                const receipts = this.getReceiptsFromStorage();
+                
+                if (receipts.length === 0) {
+                    alert('Nejsou k dispozici žádné účtenky pro vytvoření reportu.');
+                    return;
+                }
+                
+                // Filtrování účtenek podle typu reportu
+                let filteredReceipts = [];
+                let reportData = [];
+                let chartData = {
+                    labels: [],
+                    values: []
+                };
+                
+                const yearInt = parseInt(year);
+                
+                switch (type) {
+                    case 'quarterly-category':
+                        reportTitle.textContent = `Výdaje podle kategorií za ${quarter}. čtvrtletí ${year}`;
+                        
+                        // Filtrování podle čtvrtletí a roku
+                        filteredReceipts = receipts.filter(receipt => {
+                            const date = this.parseDate(receipt.dateOfSale);
+                            const receiptYear = date.getFullYear();
+                            const receiptQuarter = Math.floor((date.getMonth() / 3)) + 1;
+                            
+                            return receiptYear === yearInt && receiptQuarter === parseInt(quarter);
+                        });
+                        
+                        // Seskupení podle kategorií
+                        reportData = this.groupByCategory(filteredReceipts);
+                        break;
+                        
+                    case 'ytd-category':
+                        reportTitle.textContent = `Výdaje podle kategorií - Year to Date ${year}`;
+                        
+                        // Filtrování podle roku a YTD
+                        filteredReceipts = receipts.filter(receipt => {
+                            const date = this.parseDate(receipt.dateOfSale);
+                            const receiptYear = date.getFullYear();
+                            const today = new Date();
+                            
+                            return receiptYear === yearInt && date <= today;
+                        });
+                        
+                        // Seskupení podle kategorií
+                        reportData = this.groupByCategory(filteredReceipts);
+                        break;
+                        
+                    case 'ytd-supplier':
+                        reportTitle.textContent = `Výdaje podle dodavatelů - Year to Date ${year}`;
+                        
+                        // Filtrování podle roku a YTD
+                        filteredReceipts = receipts.filter(receipt => {
+                            const date = this.parseDate(receipt.dateOfSale);
+                            const receiptYear = date.getFullYear();
+                            const today = new Date();
+                            
+                            return receiptYear === yearInt && date <= today;
+                        });
+                        
+                        // Seskupení podle dodavatelů
+                        reportData = this.groupBySupplier(filteredReceipts);
+                        break;
+                }
+                
+                // Kontrola, zda jsou k dispozici data pro report
+                if (filteredReceipts.length === 0) {
+                    alert('Pro vybraný časový rozsah nejsou k dispozici žádné účtenky.');
+                    return;
+                }
+                
+                // Zobrazení tabulky
+                this.renderReportTable(reportData, type);
+                
+                // Získání dat pro graf
+                reportData.forEach(item => {
+                    chartData.labels.push(item.name);
+                    chartData.values.push(item.amount);
+                });
+                
+                // Zobrazení grafu
+                this.renderChart(chartData);
+                
+                // Zobrazení výsledků
+                reportResult.classList.remove('hidden');
+            },
+
+            // Seskupení účtenek podle kategorií
+            groupByCategory: function(receipts) {
+                const categories = {};
+                
+                receipts.forEach(receipt => {
+                    const category = receipt.category;
+                    const amount = receipt.priceWithoutVAT > 0 ? receipt.priceWithoutVAT : receipt.priceIncludingVAT;
+                    
+                    if (!categories[category]) {
+                        categories[category] = 0;
+                    }
+                    
+                    categories[category] += amount;
+                });
+                
+                const result = [];
+                let total = 0;
+                
+                for (const [category, amount] of Object.entries(categories)) {
+                    result.push({
+                        name: category,
+                        amount: amount
+                    });
+                    
+                    total += amount;
+                }
+                
+                // Seřazení podle výše částky (sestupně)
+                result.sort((a, b) => b.amount - a.amount);
+                
+                // Přidání celkové částky
+                result.push({
+                    name: 'CELKEM',
+                    amount: total,
+                    isTotal: true
+                });
+                
+                return result;
+            },
+
+            // Seskupení účtenek podle dodavatelů (DIČ)
+            groupBySupplier: function(receipts) {
+                const suppliers = {};
+                
+                receipts.forEach(receipt => {
+                    const vatNumber = receipt.vatNumber;
+                    const amount = receipt.priceWithoutVAT > 0 ? receipt.priceWithoutVAT : receipt.priceIncludingVAT;
+                    
+                    if (!suppliers[vatNumber]) {
+                        suppliers[vatNumber] = {
+                            name: receipt.companyName,
+                            vatNumber: vatNumber,
+                            amount: 0
+                        };
+                    }
+                    
+                    suppliers[vatNumber].amount += amount;
+                });
+                
+                const result = [];
+                let total = 0;
+                
+                for (const supplier of Object.values(suppliers)) {
+                    result.push({
+                        name: `${supplier.name} (${supplier.vatNumber})`,
+                        amount: supplier.amount
+                    });
+                    
+                    total += supplier.amount;
+                }
+                
+                // Seřazení podle výše částky (sestupně)
+                result.sort((a, b) => b.amount - a.amount);
+                
+                // Přidání celkové částky
+                result.push({
+                    name: 'CELKEM',
+                    amount: total,
+                    isTotal: true
+                });
+                
+                return result;
+            },
+
+            // Zobrazení tabulky s reportem
+            renderReportTable: function(data, type) {
+                const tableHeader = document.getElementById('reportTableHeader');
+                const tableBody = document.getElementById('reportTableBody');
+                const tableFooter = document.getElementById('reportTableFooter');
+                
+                // Záhlaví tabulky
+                let headerHtml = '';
+                
+                if (type === 'ytd-supplier') {
+                    headerHtml = `
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dodavatel</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Částka (Kč)</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Podíl (%)</th>
+                    `;
+                } else {
+                    headerHtml = `
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kategorie</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Částka (Kč)</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Podíl (%)</th>
+                    `;
+                }
+                
+                tableHeader.innerHTML = headerHtml;
+                
+                // Obsah tabulky
+                let bodyHtml = '';
+                let totalAmount = 0;
+                
+                // Výpočet celkové částky (bez řádku s celkovým součtem)
+                data.forEach(item => {
+                    if (!item.isTotal) {
+                        totalAmount += item.amount;
+                    }
+                });
+                
+                data.forEach(item => {
+                    const percentage = item.isTotal ? 100 : (item.amount / totalAmount * 100);
+                    
+                    bodyHtml += `
+                        <tr class="${item.isTotal ? 'bg-gray-100 font-bold' : ''}">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.amount.toFixed(2)}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${item.isTotal ? '' : percentage.toFixed(2) + '%'}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableBody.innerHTML = bodyHtml;
+                tableFooter.innerHTML = '';
+            },
+
+            // Vykreslení grafu
+            renderChart: function(data) {
+                const ctx = document.getElementById('reportChart').getContext('2d');
+                
+                // Odstranění celkového součtu z dat pro graf
+                const labels = [...data.labels];
+                const values = [...data.values];
+                
+                if (labels[labels.length - 1] === 'CELKEM') {
+                    labels.pop();
+                    values.pop();
+                }
+                
+                // Generování barev pro graf
+                const colors = this.generateChartColors(labels.length);
+                
+                // Zničení existujícího grafu, pokud existuje
+                if (this.chart) {
+                    this.chart.destroy();
+                }
+                
+                // Vytvoření nového grafu
+                this.chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values,
+                            backgroundColor: colors,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                                labels: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.raw;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((value / total) * 100).toFixed(2);
+                                        return `${context.label}: ${value.toFixed(2)} Kč (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            // Generování barev pro graf
+            generateChartColors: function(count) {
+                const colors = [
+                    '#4299E1', '#48BB78', '#F56565', '#ED8936', '#9F7AEA',
+                    '#38B2AC', '#F6AD55', '#CBD5E0', '#FC8181', '#68D391',
+                    '#63B3ED', '#4FD1C5', '#B794F4', '#F687B3', '#C6F6D5'
+                ];
+                
+                // Pokud je kategorií více než barev, opakovat barvy
+                if (count > colors.length) {
+                    const extraColors = [];
+                    for (let i = 0; i < count - colors.length; i++) {
+                        extraColors.push(colors[i % colors.length]);
+                    }
+                    return [...colors, ...extraColors];
+                }
+                
+                return colors.slice(0, count);
+            },
+
+            // Formátování data
+            formatDate: function(dateString) {
+                const date = this.parseDate(dateString);
+                return date.toLocaleDateString('cs-CZ');
+            },
+
+            // Převod formátu dd.mm.yyyy na objekt Date
+            parseDate: function(dateString) {
+                // Pokud je datum ve formátu dd.mm.yyyy
+                if (dateString.includes('.')) {
+                    const parts = dateString.split('.');
+                    if (parts.length === 3) {
+                        // Převod na formát yyyy-mm-dd pro vytvoření objektu Date
+                        return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+                    }
+                }
+                
+                // Pokud není formát dd.mm.yyyy, zkusit standardní parse
+                return new Date(dateString);
+            },
+
+            // Naplnění select boxu s roky
+            populateYearSelect: function() {
+                const yearSelect = document.getElementById('yearSelect');
+                const currentYear = new Date().getFullYear();
+                
+                // Získání všech unikátních roků z účtenek
+                const years = new Set();
+                const receipts = this.getReceiptsFromStorage();
+                
+                receipts.forEach(receipt => {
+                    const date = this.parseDate(receipt.dateOfSale);
+                    years.add(date.getFullYear());
+                });
+                
+                // Přidání aktuálního roku, pokud není v seznamu
+                years.add(currentYear);
+                
+                // Seřazení roků sestupně
+                const sortedYears = Array.from(years).sort((a, b) => b - a);
+                
+                // Naplnění select boxu
+                let html = '';
+                sortedYears.forEach(year => {
+                    html += `<option value="${year}">${year}</option>`;
+                });
+                
+                yearSelect.innerHTML = html;
+            }
+        };
+
+        // Inicializace aplikace
+        document.addEventListener('DOMContentLoaded', function() {
+            App.init();
+        });
+    </script>
+</body>
+</html>
