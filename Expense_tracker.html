@@ -42,45 +42,102 @@
         <div class="bg-white p-6 rounded-lg shadow-md">
             <!-- Import účtenek -->
             <div id="import" class="tab-content active">
-                <h2 class="text-xl font-semibold mb-4">Import účtenky</h2>
-                <div class="mb-6">
-                    <input type="file" id="fileInput" accept=".json" class="hidden">
-                    <label for="fileInput" class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded inline-block">
-                        Vybrat JSON soubor
-                    </label>
-                    <span id="fileName" class="ml-4 text-gray-600"></span>
-                </div>
+                <h2 class="text-xl font-semibold mb-4">Import účtenek</h2>
+                
+                <!-- Jednotlivý import -->
+                <div class="mb-8 p-4 border border-gray-200 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4">Import jedné účtenky</h3>
+                    <div class="mb-6">
+                        <input type="file" id="fileInput" accept=".json" class="hidden">
+                        <label for="fileInput" class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded inline-block">
+                            Vybrat JSON soubor
+                        </label>
+                        <span id="fileName" class="ml-4 text-gray-600"></span>
+                    </div>
 
-                <div id="importPreview" class="mb-6 hidden">
-                    <h3 class="text-lg font-medium mb-2">Náhled účtenky</h3>
-                    <div class="bg-gray-50 p-4 rounded border">
-                        <div id="receiptPreview" class="grid grid-cols-2 gap-4">
-                            <!-- Sem se doplní náhled účtenky -->
+                    <div id="importPreview" class="mb-6 hidden">
+                        <h4 class="text-lg font-medium mb-2">Náhled účtenky</h4>
+                        <div class="bg-gray-50 p-4 rounded border">
+                            <div id="receiptPreview" class="grid grid-cols-2 gap-4">
+                                <!-- Sem se doplní náhled účtenky -->
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label for="categorySelect" class="block text-sm font-medium text-gray-700 mb-1">Kategorie výdaje:</label>
+                            <select id="categorySelect" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <option value="">-- Vyberte kategorii --</option>
+                                <option value="pohonné hmoty">Pohonné hmoty</option>
+                                <option value="mytí vozu">Mytí vozu</option>
+                                <option value="auto ostatní">Auto ostatní</option>
+                                <option value="kancelářské potřeby">Kancelářské potřeby</option>
+                                <option value="kancelářské služby">Kancelářské služby</option>
+                                <option value="taxi">Taxi</option>
+                                <option value="hospitality">Hospitality</option>
+                                <option value="ostatní">Ostatní</option>
+                            </select>
+                        </div>
+
+                        <button id="saveReceiptBtn" class="mt-4 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Uložit účtenku
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Hromadný import -->
+                <div class="mb-6 p-4 border border-gray-200 rounded-lg">
+                    <h3 class="text-lg font-medium mb-4">Hromadný import účtenek</h3>
+                    <div class="mb-4">
+                        <input type="file" id="bulkFileInput" accept=".json" multiple class="hidden">
+                        <label for="bulkFileInput" class="cursor-pointer bg-purple-500 hover:bg-purple-600 text-white font-medium py-2 px-4 rounded inline-block">
+                            Vybrat více JSON souborů
+                        </label>
+                        <span id="bulkFileCount" class="ml-4 text-gray-600"></span>
+                    </div>
+                    
+                    <div id="bulkImportPreview" class="mb-6 hidden">
+                        <h4 class="text-lg font-medium mb-2">Seznam souborů k importu</h4>
+                        <div id="bulkFilesList" class="bg-gray-50 p-4 rounded border max-h-60 overflow-y-auto">
+                            <!-- Sem se doplní seznam souborů -->
+                        </div>
+                        
+                        <div class="mt-4">
+                            <label for="bulkCategorySelect" class="block text-sm font-medium text-gray-700 mb-1">Společná kategorie pro všechny účtenky:</label>
+                            <select id="bulkCategorySelect" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                <option value="">-- Vyberte kategorii --</option>
+                                <option value="pohonné hmoty">Pohonné hmoty</option>
+                                <option value="mytí vozu">Mytí vozu</option>
+                                <option value="auto ostatní">Auto ostatní</option>
+                                <option value="kancelářské potřeby">Kancelářské potřeby</option>
+                                <option value="kancelářské služby">Kancelářské služby</option>
+                                <option value="taxi">Taxi</option>
+                                <option value="hospitality">Hospitality</option>
+                                <option value="ostatní">Ostatní</option>
+                            </select>
+                        </div>
+                        
+                        <button id="saveBulkReceiptsBtn" class="mt-4 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            Uložit všechny účtenky
+                        </button>
+                    </div>
+                    
+                    <div id="bulkImportProgress" class="hidden mt-4">
+                        <div class="bg-blue-50 p-4 rounded border">
+                            <h4 class="font-medium mb-2">Průběh importu</h4>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p id="progressText" class="text-sm text-gray-600 mt-2">Zpracovávám soubory...</p>
                         </div>
                     </div>
-
-                    <div class="mt-4">
-                        <label for="categorySelect" class="block text-sm font-medium text-gray-700 mb-1">Kategorie výdaje:</label>
-                        <select id="categorySelect" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                            <option value="">-- Vyberte kategorii --</option>
-                            <option value="pohonné hmoty">Pohonné hmoty</option>
-                            <option value="mytí vozu">Mytí vozu</option>
-                            <option value="auto ostatní">Auto ostatní</option>
-                            <option value="kancelářské potřeby">Kancelářské potřeby</option>
-                            <option value="kancelářské služby">Kancelářské služby</option>
-                            <option value="taxi">Taxi</option>
-                            <option value="hospitality">Hospitality</option>
-                            <option value="ostatní">Ostatní</option>
-                        </select>
-                    </div>
-
-                    <button id="saveReceiptBtn" class="mt-4 bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        Uložit účtenku
-                    </button>
                 </div>
 
                 <div id="importSuccess" class="hidden mt-4 p-4 bg-green-100 text-green-700 rounded">
                     Účtenka byla úspěšně uložena!
+                </div>
+                
+                <div id="bulkImportSuccess" class="hidden mt-4 p-4 bg-green-100 text-green-700 rounded">
+                    <span id="bulkSuccessText">Všechny účtenky byly úspěšně uloženy!</span>
                 </div>
             </div>
 
@@ -248,6 +305,20 @@
         const App = {
             // Inicializace aplikace
             init: function() {
+                console.log('Inicializuji aplikaci...');
+                console.log('LocalStorage je dostupný:', typeof(Storage) !== "undefined");
+                
+                // Test localStorage
+                try {
+                    localStorage.setItem('test', 'test_value');
+                    const testValue = localStorage.getItem('test');
+                    localStorage.removeItem('test');
+                    console.log('LocalStorage test úspěšný:', testValue === 'test_value');
+                } catch (e) {
+                    console.error('LocalStorage test selhał:', e);
+                    alert('VAROVÁNÍ: LocalStorage není dostupný nebo je blokován. Data nebudou uložena!');
+                }
+                
                 this.setupTabs();
                 this.setupFileInput();
                 this.setupReportControls();
@@ -257,6 +328,8 @@
                 
                 // Inicializace grafu
                 this.chart = null;
+                
+                console.log('Aplikace inicializována');
             },
 
             // Nastavení přepínání záložek
@@ -281,6 +354,12 @@
 
             // Nastavení vstupního pole pro soubor
             setupFileInput: function() {
+                this.setupSingleFileInput();
+                this.setupBulkFileInput();
+            },
+            
+            // Nastavení jednotlivého importu
+            setupSingleFileInput: function() {
                 const fileInput = document.getElementById('fileInput');
                 const fileName = document.getElementById('fileName');
                 const importPreview = document.getElementById('importPreview');
@@ -340,14 +419,10 @@
                 saveReceiptBtn.addEventListener('click', function() {
                     const category = categorySelect.value;
                     
-                    // Extrakce čísla dokladu z názvu souboru
-                    const receiptNumberMatch = App.currentReceiptFileName.match(/uctenka_(\d+)\.json$/);
-                    let receiptNumber = '';
+                    // Extrakce čísla dokladu z názvu souboru pomocí nové funkce
+                    const receiptNumber = App.extractReceiptNumber(App.currentReceiptFileName);
                     
-                    if (receiptNumberMatch && receiptNumberMatch[1]) {
-                        // Doplnění nulami na 10 číslic
-                        receiptNumber = receiptNumberMatch[1].padStart(10, '0');
-                    } else {
+                    if (!receiptNumber || receiptNumber.startsWith('UNKNOWN_')) {
                         alert('Neplatný formát názvu souboru. Očekáván formát: uctenka_XXXXXXXXXX.json');
                         return;
                     }
@@ -373,6 +448,147 @@
                     setTimeout(() => {
                         importSuccess.classList.add('hidden');
                     }, 3000);
+                });
+            },
+            
+            // Nastavení hromadného importu
+            setupBulkFileInput: function() {
+                const bulkFileInput = document.getElementById('bulkFileInput');
+                const bulkFileCount = document.getElementById('bulkFileCount');
+                const bulkImportPreview = document.getElementById('bulkImportPreview');
+                const bulkFilesList = document.getElementById('bulkFilesList');
+                const bulkCategorySelect = document.getElementById('bulkCategorySelect');
+                const saveBulkReceiptsBtn = document.getElementById('saveBulkReceiptsBtn');
+                const bulkImportProgress = document.getElementById('bulkImportProgress');
+                const bulkImportSuccess = document.getElementById('bulkImportSuccess');
+                const bulkSuccessText = document.getElementById('bulkSuccessText');
+                const progressBar = document.getElementById('progressBar');
+                const progressText = document.getElementById('progressText');
+
+                bulkFileInput.addEventListener('change', function(event) {
+                    const files = event.target.files;
+                    if (!files || files.length === 0) return;
+
+                    // Filtrování pouze JSON souborů
+                    const jsonFiles = Array.from(files).filter(file => file.name.endsWith('.json'));
+                    
+                    if (jsonFiles.length === 0) {
+                        alert('Prosím, vyberte soubory ve formátu JSON');
+                        return;
+                    }
+                    
+                    if (jsonFiles.length !== files.length) {
+                        alert(`Vybráno ${jsonFiles.length} JSON souborů z celkem ${files.length} souborů. Ostatní soubory budou ignorovány.`);
+                    }
+
+                    bulkFileCount.textContent = `Vybráno ${jsonFiles.length} souborů`;
+                    App.bulkFiles = jsonFiles;
+                    
+                    // Zobrazení seznamu souborů
+                    let html = '<ul class="space-y-1">';
+                    jsonFiles.forEach((file, index) => {
+                        html += `<li class="text-sm text-gray-700">${index + 1}. ${file.name}</li>`;
+                    });
+                    html += '</ul>';
+                    bulkFilesList.innerHTML = html;
+                    
+                    // Zobrazení formuláře pro výběr kategorie
+                    bulkImportPreview.classList.remove('hidden');
+                    bulkCategorySelect.value = '';
+                    saveBulkReceiptsBtn.disabled = true;
+                    bulkImportProgress.classList.add('hidden');
+                    bulkImportSuccess.classList.add('hidden');
+                });
+
+                // Aktivace/deaktivace tlačítka uložit podle výběru kategorie
+                bulkCategorySelect.addEventListener('change', function() {
+                    saveBulkReceiptsBtn.disabled = !this.value;
+                });
+
+                // Hromadné uložení účtenek
+                saveBulkReceiptsBtn.addEventListener('click', async function() {
+                    const category = bulkCategorySelect.value;
+                    const files = App.bulkFiles;
+                    
+                    if (!files || files.length === 0) return;
+                    
+                    // Zobrazení progress baru
+                    bulkImportProgress.classList.remove('hidden');
+                    saveBulkReceiptsBtn.disabled = true;
+                    
+                    let successCount = 0;
+                    let errorCount = 0;
+                    const errors = [];
+                    
+                    for (let i = 0; i < files.length; i++) {
+                        const file = files[i];
+                        
+                        // Aktualizace progress baru
+                        const progress = ((i + 1) / files.length) * 100;
+                        progressBar.style.width = progress + '%';
+                        progressText.textContent = `Zpracovávám ${i + 1}/${files.length}: ${file.name}`;
+                        
+                        try {
+                            const fileContent = await App.readFileAsync(file);
+                            const receiptData = JSON.parse(fileContent);
+                            
+                            // Extrakce čísla dokladu
+                            const receiptNumber = App.extractReceiptNumber(file.name);
+                            
+                            // Vytvoření záznamu účtenky
+                            const receipt = {
+                                ...receiptData,
+                                receiptNumber: receiptNumber,
+                                category: category,
+                                filename: file.name
+                            };
+                            
+                            // Uložení do localStorage
+                            App.saveReceipt(receipt);
+                            successCount++;
+                            
+                        } catch (error) {
+                            errorCount++;
+                            errors.push(`${file.name}: ${error.message}`);
+                        }
+                        
+                        // Malá pauza pro plynulost animace
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                    
+                    // Dokončení
+                    progressBar.style.width = '100%';
+                    progressText.textContent = 'Dokončeno!';
+                    
+                    // Zobrazení výsledků
+                    let resultText = `Úspěšně importováno: ${successCount} účtenek`;
+                    if (errorCount > 0) {
+                        resultText += `, chyby: ${errorCount}`;
+                        console.error('Chyby při importu:', errors);
+                    }
+                    
+                    bulkSuccessText.textContent = resultText;
+                    bulkImportSuccess.classList.remove('hidden');
+                    
+                    // Reset formuláře po krátké pauze
+                    setTimeout(() => {
+                        bulkFileInput.value = '';
+                        bulkFileCount.textContent = '';
+                        bulkImportPreview.classList.add('hidden');
+                        bulkImportProgress.classList.add('hidden');
+                        bulkImportSuccess.classList.add('hidden');
+                        saveBulkReceiptsBtn.disabled = false;
+                    }, 3000);
+                });
+            },
+            
+            // Pomocná funkce pro asynchronní čtení souboru
+            readFileAsync: function(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = () => reject(new Error('Chyba při čtení souboru'));
+                    reader.readAsText(file);
                 });
             },
 
@@ -534,27 +750,115 @@
 
             // Uložení účtenky do localStorage
             saveReceipt: function(receipt) {
+                console.log('Pokus o uložení účtenky:', receipt);
+                
                 let receipts = this.getReceiptsFromStorage();
+                console.log('Aktuální počet účtenek před uložením:', receipts.length);
                 
                 // Kontrola, zda účtenka s tímto číslem již existuje
                 const existingIndex = receipts.findIndex(r => r.receiptNumber === receipt.receiptNumber);
                 
                 if (existingIndex > -1) {
+                    console.log('Aktualizuji existující účtenku na indexu:', existingIndex);
                     // Aktualizace existující účtenky
                     receipts[existingIndex] = receipt;
                 } else {
+                    console.log('Přidávám novou účtenku');
                     // Přidání nové účtenky
                     receipts.push(receipt);
                 }
                 
-                localStorage.setItem('receipts', JSON.stringify(receipts));
+                console.log('Celkový počet účtenek po operaci:', receipts.length);
+                
+                try {
+                    localStorage.setItem('receipts', JSON.stringify(receipts));
+                    console.log('Úspěšně uloženo do localStorage');
+                    
+                    // Ověření uložení
+                    const saved = localStorage.getItem('receipts');
+                    const parsed = saved ? JSON.parse(saved) : [];
+                    console.log('Ověření: počet účtenek v localStorage:', parsed.length);
+                    
+                    if (parsed.length !== receipts.length) {
+                        console.error('CHYBA: Počet uložených účtenek neodpovídá!');
+                        alert('Chyba při ukládání dat! Zkontrolujte console pro více informací.');
+                    }
+                    
+                } catch (error) {
+                    console.error('Chyba při ukládání do localStorage:', error);
+                    alert('Chyba při ukládání účtenky: ' + error.message);
+                }
+                
                 this.updateReceiptsList();
             },
 
             // Načtení účtenek z localStorage
             getReceiptsFromStorage: function() {
-                const receipts = localStorage.getItem('receipts');
-                return receipts ? JSON.parse(receipts) : [];
+                console.log('Načítám účtenky z localStorage...');
+                
+                try {
+                    const receipts = localStorage.getItem('receipts');
+                    console.log('Raw data z localStorage:', receipts ? receipts.substring(0, 200) + '...' : 'null');
+                    
+                    const parsedReceipts = receipts ? JSON.parse(receipts) : [];
+                    console.log('Počet načtených účtenek:', parsedReceipts.length);
+                    
+                    // Oprava účtenek, které mají undefined receiptNumber
+                    const fixedReceipts = parsedReceipts.map((receipt, index) => {
+                        if (!receipt.receiptNumber || receipt.receiptNumber === 'undefined') {
+                            console.log(`Opravuji účtenku na indexu ${index}:`, receipt.filename);
+                            // Pokusíme se znovu extrahovat číslo dokladu z názvu souboru
+                            if (receipt.filename) {
+                                receipt.receiptNumber = this.extractReceiptNumber(receipt.filename);
+                            } else {
+                                // Pokud není k dispozici název souboru, použijeme náhodné číslo
+                                receipt.receiptNumber = 'N' + Date.now().toString().slice(-9);
+                            }
+                        }
+                        return receipt;
+                    });
+                    
+                    // Uložíme opravená data zpět
+                    if (fixedReceipts.length > 0 && JSON.stringify(fixedReceipts) !== JSON.stringify(parsedReceipts)) {
+                        console.log('Ukládám opravená data zpět do localStorage');
+                        localStorage.setItem('receipts', JSON.stringify(fixedReceipts));
+                    }
+                    
+                    console.log('Finální počet účtenek:', fixedReceipts.length);
+                    return fixedReceipts;
+                    
+                } catch (error) {
+                    console.error('Chyba při načítání z localStorage:', error);
+                    alert('Chyba při načítání dat: ' + error.message);
+                    return [];
+                }
+            },
+            
+            // Funkce pro extrakci čísla dokladu z názvu souboru
+            extractReceiptNumber: function(filename) {
+                console.log('Extrakce čísla dokladu z:', filename);
+                
+                // Hledáme vzor uctenka_XXXXXXXXXX.json
+                const receiptNumberMatch = filename.match(/uctenka_(.+)\.json$/i);
+                
+                if (receiptNumberMatch && receiptNumberMatch[1]) {
+                    const extractedNumber = receiptNumberMatch[1];
+                    console.log('Extrahované číslo:', extractedNumber);
+                    
+                    // Pokud je to číslo, doplníme nulami na 10 znaků
+                    if (/^\d+$/.test(extractedNumber)) {
+                        const paddedNumber = extractedNumber.padStart(10, '0');
+                        console.log('Číslo doplněné nulami:', paddedNumber);
+                        return paddedNumber;
+                    } else {
+                        // Pokud to není pouze číslo, použijeme to jak je
+                        console.log('Použito jak je:', extractedNumber);
+                        return extractedNumber;
+                    }
+                } else {
+                    console.log('Nepodařilo se extrahovat číslo dokladu');
+                    return 'UNKNOWN_' + Date.now().toString().slice(-6);
+                }
             },
 
             // Načtení účtenek při inicializaci
@@ -564,10 +868,12 @@
 
             // Aktualizace seznamu účtenek
             updateReceiptsList: function() {
+                console.log('Aktualizuji seznam účtenek...');
                 const receiptsContainer = document.getElementById('receiptsList');
                 const noReceipts = document.getElementById('noReceipts');
                 
                 this.receipts = this.getReceiptsFromStorage();
+                console.log('Načteno účtenek pro zobrazení:', this.receipts.length);
                 
                 if (this.receipts.length === 0) {
                     receiptsContainer.innerHTML = '';
@@ -577,34 +883,44 @@
                 
                 noReceipts.classList.add('hidden');
                 
-                // Seřazení účtenek podle data (nejnovější první)
+                // Seřazení účtenek podle data (nejnovější první) s ochranou proti chybám
                 this.receipts.sort((a, b) => {
-                    const dateA = this.parseDate(a.dateOfSale);
-                    const dateB = this.parseDate(b.dateOfSale);
-                    return dateB - dateA;
+                    try {
+                        const dateA = this.parseDate(a.dateOfSale);
+                        const dateB = this.parseDate(b.dateOfSale);
+                        return dateB - dateA;
+                    } catch (error) {
+                        console.error('Chyba při řazení účtenek:', error, 'Účtenka A:', a, 'Účtenka B:', b);
+                        return 0; // Pokud nastane chyba, ponecháme pořadí nezměněné
+                    }
                 });
                 
                 let html = '';
                 
                 this.receipts.forEach((receipt, index) => {
-                    const price = receipt.priceWithoutVAT > 0 ? receipt.priceWithoutVAT : receipt.priceIncludingVAT;
-                    
-                    html += `
-                        <tr>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${receipt.receiptNumber}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.companyName} (${receipt.vatNumber})</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${this.formatDate(receipt.dateOfSale)}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${price.toFixed(2)} Kč</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    ${receipt.category}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                <button data-index="${index}" class="text-red-600 hover:text-red-900 delete-receipt">Smazat</button>
-                            </td>
-                        </tr>
-                    `;
+                    try {
+                        const price = receipt.priceWithoutVAT > 0 ? receipt.priceWithoutVAT : receipt.priceIncludingVAT;
+                        
+                        html += `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${receipt.receiptNumber || 'N/A'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${receipt.companyName || 'N/A'} (${receipt.vatNumber || 'N/A'})</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${this.formatDate(receipt.dateOfSale)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${price ? price.toFixed(2) : '0.00'} Kč</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        ${receipt.category || 'Bez kategorie'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    <button data-index="${index}" class="text-red-600 hover:text-red-900 delete-receipt">Smazat</button>
+                                </td>
+                            </tr>
+                        `;
+                    } catch (error) {
+                        console.error('Chyba při vytváření HTML pro účtenku:', error, receipt);
+                        // Přeskočíme problematickou účtenku
+                    }
                 });
                 
                 receiptsContainer.innerHTML = html;
@@ -939,12 +1255,23 @@
 
             // Formátování data
             formatDate: function(dateString) {
-                const date = this.parseDate(dateString);
-                return date.toLocaleDateString('cs-CZ');
+                try {
+                    const date = this.parseDate(dateString);
+                    return date.toLocaleDateString('cs-CZ');
+                } catch (error) {
+                    console.error('Chyba při formátování data:', error, dateString);
+                    return 'Neplatné datum';
+                }
             },
 
             // Převod formátu dd.mm.yyyy na objekt Date
             parseDate: function(dateString) {
+                // Kontrola, zda je dateString definován
+                if (!dateString) {
+                    console.warn('parseDate: dateString je undefined nebo null');
+                    return new Date(); // Vrátí aktuální datum jako fallback
+                }
+                
                 // Pokud je datum ve formátu dd.mm.yyyy
                 if (dateString.includes('.')) {
                     const parts = dateString.split('.');
