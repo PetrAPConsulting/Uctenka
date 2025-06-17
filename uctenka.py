@@ -7,7 +7,7 @@ import google.generativeai as genai
 
 # --- Configuration ---
 GEMINI_API_KEY = "YOUR_API_KEY_HERE" 
-MODEL_NAME = "gemini-2.0-flash-001"
+MODEL_NAME = "gemini-2.5-flash"
 
 # --- Helper to get MIME type ---
 def get_mime_type(file_path):
