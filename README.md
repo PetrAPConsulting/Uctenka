@@ -4,7 +4,7 @@ This Python script uses the Google Gemini API to extract structured information 
 
 ## Features
 
-*   Extracts key details from receipt documents using powerful multimodal model Gemini 2.0 Flash.
+*   Extracts key details from receipt documents using powerful multimodal model Gemini 2.5 Flash.
 *   Supports PDF files and common image formats (e.g., JPG, PNG).
 *   Utilizes the Google Gemini API.
 *   Outputs extracted data in a structured JSON format. You can modify desired output.
